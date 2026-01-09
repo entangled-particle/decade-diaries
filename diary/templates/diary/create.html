@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Create Diary | Decade Diaries{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-6">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+          <h1 class="h3 mb-1">Create diary</h1>
+          <div class="text-muted small">Pick a month + year — title auto-fills.</div>
+        </div>
+        <a href="{% url 'diary:home' %}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-6">
+                <label class="form-label" for="{{ form.month.id_for_label }}">Month</label>
+                {{ form.month }}
+                {% if form.month.errors %}
+                  <div class="invalid-feedback d-block">
+                    {{ form.month.errors|striptags }}
+                  </div>
+                {% endif %}
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label" for="{{ form.year.id_for_label }}">Year</label>
+                {{ form.year }}
+                {% if form.year.errors %}
+                  <div class="invalid-feedback d-block">
+                    {{ form.year.errors|striptags }}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="{{ form.title.id_for_label }}">Title</label>
+              {{ form.title }}
+              {% if form.title.errors %}
+                <div class="invalid-feedback d-block">
+                  {{ form.title.errors|striptags }}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary" type="submit">Create</button>
+              <a class="btn btn-outline-secondary" href="{% url 'diary:home' %}">Back</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    (function () {
+      const monthEl = document.getElementById("{{ form.month.id_for_label }}");
+      const yearEl = document.getElementById("{{ form.year.id_for_label }}");
+      const titleEl = document.getElementById("{{ form.title.id_for_label }}");
+
+      if (!monthEl || !yearEl || !titleEl) return;
+
+      let lastAutoTitle = "";
+      let userEdited = false;
+
+      function updateTitle() {
+        const monthText = monthEl.options[monthEl.selectedIndex]?.text || "";
+        const yearText = yearEl.options[yearEl.selectedIndex]?.text || "";
+        const nextAuto = (monthText + " " + yearText).trim();
+
+        // Only overwrite the title while the user hasn't manually edited it.
+        if (!userEdited && nextAuto) {
+          titleEl.value = nextAuto;
+          lastAutoTitle = nextAuto;
+        }
+      }
+
+      titleEl.addEventListener("input", function () {
+        const current = (titleEl.value || "").trim();
+        // If the user types something different than the last auto title, stop auto-overwriting.
+        userEdited = current.length > 0 && current !== lastAutoTitle;
+      });
+
+      monthEl.addEventListener("change", updateTitle);
+      yearEl.addEventListener("change", updateTitle);
+
+      updateTitle();
+    })();
+  </script>
+{% endblock %}
