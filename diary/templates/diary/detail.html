@@ -25,39 +25,42 @@
       z-index: 2;
       background: rgba(255, 255, 255, 0.20);
       backdrop-filter: blur(6px);
-      border-bottom: 1px solid rgba(90, 62, 35, 0.30);
+      border-bottom: none;
       font-weight: 600;
       letter-spacing: 0.4px;
     }
 
-    table.dd-diary-table th.dd-question-col {
-      width: 25%;
-      max-width: 25%;
-      min-width: 220px;
-    }
-
     table.dd-diary-table th.dd-person-col {
-      width: auto;
+      /* With table-layout: fixed this helps keep user columns evenly sized */
+      width: 1%;
       min-width: 260px;
+      text-align: center;
     }
 
-    table.dd-diary-table tbody th {
-      background: rgba(255, 255, 255, 0.10);
-      border-right: 1px solid rgba(90, 62, 35, 0.22);
+    /* Question prompt row (spans all user columns) */
+    tr.dd-prompt-row th {
+      background: rgba(255, 255, 255, 0.14);
+      border-bottom: none;
+      padding: 0.85rem 0.85rem !important;
       vertical-align: top;
     }
 
-    /* Question cells (left column) */
-    table.dd-diary-table th.dd-question-cell {
-      width: 25%;
-      max-width: 25%;
+    .dd-prompt-title {
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .dd-prompt-text {
+      display: block;
+      margin-top: 0.25rem;
       overflow-wrap: anywhere;
       word-break: break-word;
     }
 
+    /* Remove table grid lines entirely */
     table.dd-diary-table td,
     table.dd-diary-table th {
-      border-bottom: 1px solid rgba(90, 62, 35, 0.18);
+      border: none !important;
     }
 
     table.dd-diary-table td {
@@ -143,7 +146,6 @@
               <table class="table align-middle mb-0 dd-diary-table">
                 <thead>
                   <tr>
-                    <th scope="col" class="dd-question-col">Question</th>
                     {% for u in users %}
                       <th scope="col" class="dd-person-col">
                         {% if u.first_name %}{{ u.first_name }}{% else %}{{ u.email }}{% endif %}
@@ -153,10 +155,12 @@
                 </thead>
                 <tbody>
                   {% for row in rows %}
-                    <tr>
-                      <th scope="row" class="fw-semibold dd-question-cell">
-                        {{ row.question.question }}
+                    <tr class="dd-prompt-row">
+                      <th scope="row" colspan="{{ users|length }}">
+                        <span class="dd-prompt-text">{{ row.question.question }}</span>
                       </th>
+                    </tr>
+                    <tr>
                       {% for cell in row.cells %}
                         <td>
                           {% if cell.user.id == user.id and user.is_authenticated and not user.is_superuser and not diary.locked %}
@@ -344,8 +348,10 @@
       {% endif %}
     </div>
   </div>
+{% endblock %}
 
-  <!-- Image viewer modal -->
+{% block modals %}
+  <!-- Image viewer modal (rendered outside parchment container for correct stacking) -->
   <div class="modal fade" id="imageViewerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
       <div class="modal-content">
