@@ -2,6 +2,131 @@
 
 {% block title %}{{ diary.title }} | Decade Diaries{% endblock %}
 
+{% block extra_head %}
+  <style>
+    /* Diary writing view */
+    .dd-diary-wrap {
+      border: 1px solid rgba(90, 62, 35, 0.30);
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    table.dd-diary-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    table.dd-diary-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(255, 255, 255, 0.20);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(90, 62, 35, 0.30);
+      font-weight: 600;
+      letter-spacing: 0.4px;
+    }
+
+    table.dd-diary-table th.dd-question-col {
+      width: 25%;
+      max-width: 25%;
+      min-width: 220px;
+    }
+
+    table.dd-diary-table th.dd-person-col {
+      width: auto;
+      min-width: 260px;
+    }
+
+    table.dd-diary-table tbody th {
+      background: rgba(255, 255, 255, 0.10);
+      border-right: 1px solid rgba(90, 62, 35, 0.22);
+      vertical-align: top;
+    }
+
+    /* Question cells (left column) */
+    table.dd-diary-table th.dd-question-cell {
+      width: 25%;
+      max-width: 25%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    table.dd-diary-table td,
+    table.dd-diary-table th {
+      border-bottom: 1px solid rgba(90, 62, 35, 0.18);
+    }
+
+    table.dd-diary-table td {
+      padding: 0.65rem !important;
+      vertical-align: top;
+    }
+
+    /* “Writing area” inside each cell */
+    .dd-entry {
+      position: relative;
+      padding: 0.75rem 0.85rem 0.85rem;
+      border-radius: 14px;
+      border: 1px solid rgba(90, 62, 35, 0.22);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.10)),
+        repeating-linear-gradient(
+          to bottom,
+          rgba(0,0,0,0.00) 0px,
+          rgba(0,0,0,0.00) 24px,
+          rgba(90, 62, 35, 0.18) 25px
+        );
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+      min-height: 8.75rem;
+    }
+
+    .dd-entry.dd-entry--editable {
+      border-color: rgba(122, 75, 42, 0.35);
+    }
+
+    .dd-entry .dd-pencil {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      border-radius: 999px;
+      padding: 0.15rem 0.45rem;
+      border: 1px solid rgba(43, 32, 23, 0.25);
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .dd-entry .dd-answer-text {
+      white-space: pre-wrap;
+      line-height: 1.65;
+    }
+
+    .dd-entry textarea.dd-entry-textarea {
+      width: 100%;
+      border: 0;
+      outline: none;
+      padding: 0;
+      background: transparent !important;
+      resize: vertical;
+      min-height: 7.5rem;
+      line-height: 1.65;
+    }
+
+    .dd-entry .dd-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 0.5rem;
+    }
+
+    /* Make image thumbs feel like pasted photos */
+    .dd-entry .js-image-gallery img {
+      transform: rotate(-0.4deg);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
   <div class="row justify-content-center">
     <div class="col-12">
@@ -13,15 +138,14 @@
       </div>
 
       {% if users %}
-        <div class="card shadow-sm">
-          <div class="card-body p-0">
+        <div class="dd-diary-wrap">
             <div class="table-responsive">
-              <table class="table table-bordered table-hover align-middle mb-0">
-                <thead class="table-light">
+              <table class="table align-middle mb-0 dd-diary-table">
+                <thead>
                   <tr>
-                    <th scope="col" style="min-width: 260px;">Question</th>
+                    <th scope="col" class="dd-question-col">Question</th>
                     {% for u in users %}
-                      <th scope="col" style="min-width: 260px;">
+                      <th scope="col" class="dd-person-col">
                         {% if u.first_name %}{{ u.first_name }}{% else %}{{ u.email }}{% endif %}
                       </th>
                     {% endfor %}
@@ -30,143 +154,146 @@
                 <tbody>
                   {% for row in rows %}
                     <tr>
-                      <th scope="row" class="fw-semibold">
+                      <th scope="row" class="fw-semibold dd-question-cell">
                         {{ row.question.question }}
                       </th>
                       {% for cell in row.cells %}
-                        <td class="p-2">
+                        <td>
                           {% if cell.user.id == user.id and user.is_authenticated and not user.is_superuser and not diary.locked %}
-                            <div class="card h-100 border-primary-subtle">
-                              <div class="card-body position-relative">
-                                <form
-                                  method="post"
-                                  action="{% url 'diary:save_answer' diary.id row.question.id %}"
-                                  class="js-answer-form"
-                                  enctype="multipart/form-data"
+                            <div class="dd-entry dd-entry--editable">
+                              <form
+                                method="post"
+                                action="{% url 'diary:save_answer' diary.id row.question.id %}"
+                                class="js-answer-form"
+                                enctype="multipart/form-data"
+                              >
+                                {% csrf_token %}
+                                <button
+                                  type="button"
+                                  class="btn btn-sm dd-pencil js-edit-toggle"
+                                  aria-label="Edit"
+                                  title="Edit"
                                 >
-                                  {% csrf_token %}
-                                  <button
-                                    type="button"
-                                    class="btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2 js-edit-toggle"
-                                    aria-label="Edit"
-                                    title="Edit"
-                                  >
-                                    ✎
-                                  </button>
+                                  ✎
+                                </button>
 
-                                  <div class="js-answer-view">
-                                    {% if cell.answer and cell.answer.answer %}
-                                      <div class="js-answer-display" style="white-space: pre-wrap;">{{ cell.answer.answer }}</div>
-                                    {% else %}
-                                      <span class="text-muted">—</span>
+                                <div class="js-answer-view">
+                                  {% if cell.answer and cell.answer.answer %}
+                                    <div class="dd-answer-text js-answer-display">{{ cell.answer.answer }}</div>
+                                  {% else %}
+                                    <span class="text-muted">—</span>
+                                  {% endif %}
+
+                                  {% if cell.answer %}
+                                    {% if cell.answer.file %}
+                                      <div class="mt-2">
+                                        <a
+                                          href="{{ cell.answer.file.url }}"
+                                          target="_blank"
+                                          rel="noopener"
+                                          class="btn btn-outline-primary btn-sm"
+                                        >
+                                          View File
+                                        </a>
+                                      </div>
                                     {% endif %}
 
-                                    {% if cell.answer %}
-                                      {% if cell.answer.file %}
-                                        <div class="mt-2">
+                                    {% if cell.answer.images.all %}
+                                      <div class="mt-2 d-flex flex-wrap gap-2 js-image-gallery">
+                                        {% for img in cell.answer.images.all %}
                                           <a
-                                            href="{{ cell.answer.file.url }}"
+                                            href="{{ img.image.url }}"
                                             target="_blank"
                                             rel="noopener"
-                                            class="btn btn-outline-primary btn-sm"
+                                            class="js-image-thumb"
+                                            data-full-url="{{ img.image.url }}"
                                           >
-                                            View File
+                                            <img
+                                              src="{{ img.image.url }}"
+                                              alt="Answer image"
+                                              style="width: 84px; height: 84px; object-fit: cover; border-radius: 10px; border: 1px solid rgba(0,0,0,.12);"
+                                            />
                                           </a>
-                                        </div>
-                                      {% endif %}
-
-                                      {% if cell.answer.images.all %}
-                                        <div class="mt-2 d-flex flex-wrap gap-2 js-image-gallery">
-                                          {% for img in cell.answer.images.all %}
-                                            <a
-                                              href="{{ img.image.url }}"
-                                              target="_blank"
-                                              rel="noopener"
-                                              class="js-image-thumb"
-                                              data-full-url="{{ img.image.url }}"
-                                            >
-                                              <img
-                                                src="{{ img.image.url }}"
-                                                alt="Answer image"
-                                                style="width: 84px; height: 84px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(0,0,0,.1);"
-                                              />
-                                            </a>
-                                          {% endfor %}
-                                        </div>
-                                      {% endif %}
+                                        {% endfor %}
+                                      </div>
                                     {% endif %}
+                                  {% endif %}
+                                </div>
+
+                                <div class="js-answer-edit d-none">
+                                  <textarea
+                                    name="answer"
+                                    class="dd-entry-textarea js-answer-textarea"
+                                    rows="6"
+                                    data-initial="{{ cell.answer.answer|default:'' }}"
+                                  >{{ cell.answer.answer|default:"" }}</textarea>
+
+                                  <div class="mt-2">
+                                    <label class="form-label small text-muted mb-1">Add images</label>
+                                    <input
+                                      type="file"
+                                      name="images"
+                                      accept="image/*"
+                                      multiple
+                                      class="form-control form-control-sm js-answer-images"
+                                    />
+                                    <div class="form-text">You can select multiple images; new uploads are added to this answer.</div>
                                   </div>
 
-                                  <div class="js-answer-edit d-none">
-                                    <textarea
-                                      name="answer"
-                                      class="form-control js-answer-textarea"
-                                      rows="4"
-                                      data-initial="{{ cell.answer.answer|default:'' }}"
-                                    >{{ cell.answer.answer|default:"" }}</textarea>
+                                  {% if cell.answer %}
+                                    {% if cell.answer.file %}
+                                      <div class="mt-2">
+                                        <a
+                                          href="{{ cell.answer.file.url }}"
+                                          target="_blank"
+                                          rel="noopener"
+                                          class="btn btn-outline-primary btn-sm"
+                                        >
+                                          View File
+                                        </a>
+                                      </div>
+                                    {% endif %}
 
-                                    <div class="mt-2">
-                                      <label class="form-label small text-muted mb-1">Add images</label>
-                                      <input
-                                        type="file"
-                                        name="images"
-                                        accept="image/*"
-                                        multiple
-                                        class="form-control form-control-sm js-answer-images"
-                                      />
-                                      <div class="form-text">You can select multiple images; new uploads are added to this answer.</div>
-                                    </div>
-
-                                    {% if cell.answer %}
-                                      {% if cell.answer.file %}
-                                        <div class="mt-2">
+                                    {% if cell.answer.images.all %}
+                                      <div class="mt-2 d-flex flex-wrap gap-2 js-image-gallery">
+                                        {% for img in cell.answer.images.all %}
                                           <a
-                                            href="{{ cell.answer.file.url }}"
+                                            href="{{ img.image.url }}"
                                             target="_blank"
                                             rel="noopener"
-                                            class="btn btn-outline-primary btn-sm"
+                                            class="js-image-thumb"
+                                            data-full-url="{{ img.image.url }}"
                                           >
-                                            View File
+                                            <img
+                                              src="{{ img.image.url }}"
+                                              alt="Answer image"
+                                              style="width: 84px; height: 84px; object-fit: cover; border-radius: 10px; border: 1px solid rgba(0,0,0,.12);"
+                                            />
                                           </a>
-                                        </div>
-                                      {% endif %}
-
-                                      {% if cell.answer.images.all %}
-                                        <div class="mt-2 d-flex flex-wrap gap-2 js-image-gallery">
-                                          {% for img in cell.answer.images.all %}
-                                            <a
-                                              href="{{ img.image.url }}"
-                                              target="_blank"
-                                              rel="noopener"
-                                              class="js-image-thumb"
-                                              data-full-url="{{ img.image.url }}"
-                                            >
-                                              <img
-                                                src="{{ img.image.url }}"
-                                                alt="Answer image"
-                                                style="width: 84px; height: 84px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(0,0,0,.1);"
-                                              />
-                                            </a>
-                                          {% endfor %}
-                                        </div>
-                                      {% endif %}
+                                        {% endfor %}
+                                      </div>
                                     {% endif %}
+                                  {% endif %}
 
-                                    <div class="d-flex justify-content-end mt-2">
-                                      <button type="submit" class="btn btn-primary btn-sm d-none js-save-btn">
-                                        Save
-                                      </button>
-                                    </div>
+                                  <div class="dd-actions">
+                                    <button type="submit" class="btn btn-primary btn-sm d-none js-save-btn">
+                                      Save
+                                    </button>
                                   </div>
-                                </form>
-                              </div>
+                                </div>
+                              </form>
                             </div>
                           {% else %}
-                            <div class="card h-100">
-                              <div class="card-body">
-                                {% if cell.answer %}
-                                  <div class="mb-2">{{ cell.answer.answer }}</div>
-                                  {% if cell.answer.file %}
+                            <div class="dd-entry">
+                              {% if cell.answer %}
+                                {% if cell.answer.answer %}
+                                  <div class="dd-answer-text mb-2">{{ cell.answer.answer }}</div>
+                                {% else %}
+                                  <span class="text-muted">—</span>
+                                {% endif %}
+
+                                {% if cell.answer.file %}
+                                  <div class="mt-2">
                                     <a
                                       href="{{ cell.answer.file.url }}"
                                       target="_blank"
@@ -175,30 +302,31 @@
                                     >
                                       View File
                                     </a>
-                                  {% endif %}
-                                  {% if cell.answer.images.all %}
-                                    <div class="mt-2 d-flex flex-wrap gap-2 js-image-gallery">
-                                      {% for img in cell.answer.images.all %}
-                                        <a
-                                          href="{{ img.image.url }}"
-                                          target="_blank"
-                                          rel="noopener"
-                                          class="js-image-thumb"
-                                          data-full-url="{{ img.image.url }}"
-                                        >
-                                          <img
-                                            src="{{ img.image.url }}"
-                                            alt="Answer image"
-                                            style="width: 84px; height: 84px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(0,0,0,.1);"
-                                          />
-                                        </a>
-                                      {% endfor %}
-                                    </div>
-                                  {% endif %}
-                                {% else %}
-                                  <span class="text-muted">—</span>
+                                  </div>
                                 {% endif %}
-                              </div>
+
+                                {% if cell.answer.images.all %}
+                                  <div class="mt-2 d-flex flex-wrap gap-2 js-image-gallery">
+                                    {% for img in cell.answer.images.all %}
+                                      <a
+                                        href="{{ img.image.url }}"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="js-image-thumb"
+                                        data-full-url="{{ img.image.url }}"
+                                      >
+                                        <img
+                                          src="{{ img.image.url }}"
+                                          alt="Answer image"
+                                          style="width: 84px; height: 84px; object-fit: cover; border-radius: 10px; border: 1px solid rgba(0,0,0,.12);"
+                                        />
+                                      </a>
+                                    {% endfor %}
+                                  </div>
+                                {% endif %}
+                              {% else %}
+                                <span class="text-muted">—</span>
+                              {% endif %}
                             </div>
                           {% endif %}
                         </td>
@@ -208,7 +336,6 @@
                 </tbody>
               </table>
             </div>
-          </div>
         </div>
       {% else %}
         <div class="alert alert-secondary mb-0">
