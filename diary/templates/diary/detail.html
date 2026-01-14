@@ -127,6 +127,72 @@
       transform: rotate(-0.4deg);
       box-shadow: 0 6px 18px rgba(0,0,0,0.18);
     }
+
+    /* Image viewer: framed picture look */
+    #imageViewerModal .modal-content {
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      overflow: visible;
+      box-shadow: none;
+    }
+
+    #imageViewerModal .modal-header,
+    #imageViewerModal .modal-footer {
+      display: none;
+    }
+
+    #imageViewerModal .modal-body {
+      overflow: auto;
+      padding: 0 !important;
+      background: transparent !important;
+    }
+
+    .dd-picture-frame {
+      position: relative;
+      box-sizing: border-box;
+      padding: 12px;
+      border-radius: 16px;
+      max-width: min(980px, 92vw);
+      max-height: 76vh;
+      /* warmer, cleaner “wood frame” */
+      background: linear-gradient(135deg, #9b5d33 0%, #6f3f23 40%, #4a2a17 100%);
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow:
+        0 16px 34px rgba(0,0,0,0.45),
+        inset 0 2px 0 rgba(255,255,255,0.18),
+        inset 0 -3px 0 rgba(0,0,0,0.30);
+    }
+
+    .dd-picture-mat {
+      position: relative;
+      box-sizing: border-box;
+      padding: 10px;
+      border-radius: 12px;
+      max-width: 100%;
+      max-height: 100%;
+      background:
+        radial-gradient(700px 240px at 30% 0%, rgba(255,255,255,0.35), transparent 55%),
+        linear-gradient(180deg, rgba(250, 245, 232, 0.95), rgba(232, 221, 195, 0.95));
+      border: 1px solid rgba(0,0,0,0.15);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.45);
+      overflow: hidden;
+    }
+
+    .dd-picture-mat img {
+      display: block;
+      max-width: 100%;
+      width: auto;
+      height: auto;
+      max-height: 68vh;
+      object-fit: contain;
+      border-radius: 10px;
+      border: 0;
+      box-shadow:
+        0 10px 24px rgba(0,0,0,0.28),
+        inset 0 1px 0 rgba(255,255,255,0.18);
+      background: transparent;
+    }
   </style>
 {% endblock %}
 
@@ -355,34 +421,13 @@
   <div class="modal fade" id="imageViewerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Image</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body p-0 bg-dark">
-          <div class="d-flex align-items-center justify-content-center" style="min-height: 60vh;">
-            <img
-              id="imageViewerImg"
-              src=""
-              alt=""
-              style="max-width: 100%; max-height: 80vh; object-fit: contain;"
-            />
-          </div>
-        </div>
-        <div class="modal-footer d-flex justify-content-between">
-          <div class="d-flex gap-2">
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="imageViewerPrev" aria-label="Previous image">
-              ← Prev
-            </button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="imageViewerNext" aria-label="Next image">
-              Next →
-            </button>
-          </div>
-          <div class="d-flex gap-2 align-items-center">
-            <span class="text-muted small" id="imageViewerCount"></span>
-            <a class="btn btn-outline-light btn-sm" id="imageViewerOpen" href="#" target="_blank" rel="noopener">
-              Open in new tab
-            </a>
+        <div class="modal-body p-3">
+          <div class="d-flex align-items-center justify-content-center">
+            <div class="dd-picture-frame">
+              <div class="dd-picture-mat">
+                <img id="imageViewerImg" src="" alt="" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -445,30 +490,17 @@
       // Lightbox-style image viewer (Bootstrap modal)
       const modalEl = document.getElementById("imageViewerModal");
       const imgEl = document.getElementById("imageViewerImg");
-      const openEl = document.getElementById("imageViewerOpen");
-      const prevBtn = document.getElementById("imageViewerPrev");
-      const nextBtn = document.getElementById("imageViewerNext");
-      const countEl = document.getElementById("imageViewerCount");
-      if (!modalEl || !imgEl || !openEl || !prevBtn || !nextBtn || !countEl || !window.bootstrap) return;
+      if (!modalEl || !imgEl || !window.bootstrap) return;
 
       const modal = new bootstrap.Modal(modalEl);
       let gallery = [];
       let index = 0;
-
-      function setEnabled(btn, enabled) {
-        btn.disabled = !enabled;
-        btn.classList.toggle("disabled", !enabled);
-      }
 
       function render() {
         const item = gallery[index];
         const url = item ? item.dataset.fullUrl || item.getAttribute("href") : "";
         imgEl.src = url || "";
         imgEl.alt = "Answer image";
-        openEl.href = url || "#";
-        countEl.textContent = gallery.length ? (index + 1) + " / " + gallery.length : "";
-        setEnabled(prevBtn, index > 0);
-        setEnabled(nextBtn, index < gallery.length - 1);
       }
 
       function openFrom(anchor) {
@@ -487,33 +519,28 @@
         openFrom(a);
       });
 
-      prevBtn.addEventListener("click", function () {
-        if (index > 0) {
-          index -= 1;
-          render();
-        }
-      });
-
-      nextBtn.addEventListener("click", function () {
-        if (index < gallery.length - 1) {
-          index += 1;
-          render();
-        }
-      });
-
       modalEl.addEventListener("hidden.bs.modal", function () {
         // Clear src so the browser stops decoding/playing large images.
         imgEl.src = "";
-        openEl.href = "#";
-        countEl.textContent = "";
         gallery = [];
         index = 0;
       });
 
       document.addEventListener("keydown", function (e) {
         if (!modalEl.classList.contains("show")) return;
-        if (e.key === "ArrowLeft") prevBtn.click();
-        if (e.key === "ArrowRight") nextBtn.click();
+        if (e.key === "ArrowLeft" && index > 0) {
+          index -= 1;
+          render();
+        }
+        if (e.key === "ArrowRight" && index < gallery.length - 1) {
+          index += 1;
+          render();
+        }
+        if ((e.key || "").toLowerCase() === "o") {
+          const item = gallery[index];
+          const url = item ? item.dataset.fullUrl || item.getAttribute("href") : "";
+          if (url) window.open(url, "_blank", "noopener");
+        }
       });
     })();
   </script>
