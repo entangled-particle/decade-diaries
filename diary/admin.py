@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Diary, Question, Answer
+from .models import Diary, Question, Answer, AnswerImage
 
 
 class DiaryAdmin(admin.ModelAdmin):
@@ -12,6 +12,11 @@ class DiaryAdmin(admin.ModelAdmin):
 admin.site.register(Diary, DiaryAdmin)
 
 
+class AnswerImageInline(admin.TabularInline):
+    model = AnswerImage
+    extra = 0
+
+
 class AnswerAdmin(admin.ModelAdmin):
     list_display = ('diary', 'user_first_name', 'question', 'answer',
                     'file', 'created_at', 'updated_at')
@@ -19,6 +24,7 @@ class AnswerAdmin(admin.ModelAdmin):
     search_fields = ('diary__title', 'user__email',
                      'question__question', 'answer')
     list_per_page = 10
+    inlines = [AnswerImageInline]
 
     @admin.display(description="User")
     def user_first_name(self, obj):
@@ -26,6 +32,7 @@ class AnswerAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Answer, AnswerAdmin)
+admin.site.register(AnswerImage)
 
 
 class QuestionAdmin(admin.ModelAdmin):

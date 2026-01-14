@@ -42,6 +42,7 @@
                                   method="post"
                                   action="{% url 'diary:save_answer' diary.id row.question.id %}"
                                   class="js-answer-form"
+                                  enctype="multipart/form-data"
                                 >
                                   {% csrf_token %}
                                   <button
@@ -59,6 +60,41 @@
                                     {% else %}
                                       <span class="text-muted">—</span>
                                     {% endif %}
+
+                                    {% if cell.answer %}
+                                      {% if cell.answer.file %}
+                                        <div class="mt-2">
+                                          <a
+                                            href="{{ cell.answer.file.url }}"
+                                            target="_blank"
+                                            rel="noopener"
+                                            class="btn btn-outline-primary btn-sm"
+                                          >
+                                            View File
+                                          </a>
+                                        </div>
+                                      {% endif %}
+
+                                      {% if cell.answer.images.all %}
+                                        <div class="mt-2 d-flex flex-wrap gap-2 js-image-gallery">
+                                          {% for img in cell.answer.images.all %}
+                                            <a
+                                              href="{{ img.image.url }}"
+                                              target="_blank"
+                                              rel="noopener"
+                                              class="js-image-thumb"
+                                              data-full-url="{{ img.image.url }}"
+                                            >
+                                              <img
+                                                src="{{ img.image.url }}"
+                                                alt="Answer image"
+                                                style="width: 84px; height: 84px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(0,0,0,.1);"
+                                              />
+                                            </a>
+                                          {% endfor %}
+                                        </div>
+                                      {% endif %}
+                                    {% endif %}
                                   </div>
 
                                   <div class="js-answer-edit d-none">
@@ -69,17 +105,51 @@
                                       data-initial="{{ cell.answer.answer|default:'' }}"
                                     >{{ cell.answer.answer|default:"" }}</textarea>
 
-                                    {% if cell.answer and cell.answer.file %}
-                                      <div class="mt-2">
-                                        <a
-                                          href="{{ cell.answer.file.url }}"
-                                          target="_blank"
-                                          rel="noopener"
-                                          class="btn btn-outline-primary btn-sm"
-                                        >
-                                          View File
-                                        </a>
-                                      </div>
+                                    <div class="mt-2">
+                                      <label class="form-label small text-muted mb-1">Add images</label>
+                                      <input
+                                        type="file"
+                                        name="images"
+                                        accept="image/*"
+                                        multiple
+                                        class="form-control form-control-sm js-answer-images"
+                                      />
+                                      <div class="form-text">You can select multiple images; new uploads are added to this answer.</div>
+                                    </div>
+
+                                    {% if cell.answer %}
+                                      {% if cell.answer.file %}
+                                        <div class="mt-2">
+                                          <a
+                                            href="{{ cell.answer.file.url }}"
+                                            target="_blank"
+                                            rel="noopener"
+                                            class="btn btn-outline-primary btn-sm"
+                                          >
+                                            View File
+                                          </a>
+                                        </div>
+                                      {% endif %}
+
+                                      {% if cell.answer.images.all %}
+                                        <div class="mt-2 d-flex flex-wrap gap-2 js-image-gallery">
+                                          {% for img in cell.answer.images.all %}
+                                            <a
+                                              href="{{ img.image.url }}"
+                                              target="_blank"
+                                              rel="noopener"
+                                              class="js-image-thumb"
+                                              data-full-url="{{ img.image.url }}"
+                                            >
+                                              <img
+                                                src="{{ img.image.url }}"
+                                                alt="Answer image"
+                                                style="width: 84px; height: 84px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(0,0,0,.1);"
+                                              />
+                                            </a>
+                                          {% endfor %}
+                                        </div>
+                                      {% endif %}
                                     {% endif %}
 
                                     <div class="d-flex justify-content-end mt-2">
@@ -106,6 +176,25 @@
                                       View File
                                     </a>
                                   {% endif %}
+                                  {% if cell.answer.images.all %}
+                                    <div class="mt-2 d-flex flex-wrap gap-2 js-image-gallery">
+                                      {% for img in cell.answer.images.all %}
+                                        <a
+                                          href="{{ img.image.url }}"
+                                          target="_blank"
+                                          rel="noopener"
+                                          class="js-image-thumb"
+                                          data-full-url="{{ img.image.url }}"
+                                        >
+                                          <img
+                                            src="{{ img.image.url }}"
+                                            alt="Answer image"
+                                            style="width: 84px; height: 84px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(0,0,0,.1);"
+                                          />
+                                        </a>
+                                      {% endfor %}
+                                    </div>
+                                  {% endif %}
                                 {% else %}
                                   <span class="text-muted">—</span>
                                 {% endif %}
@@ -128,6 +217,44 @@
       {% endif %}
     </div>
   </div>
+
+  <!-- Image viewer modal -->
+  <div class="modal fade" id="imageViewerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Image</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0 bg-dark">
+          <div class="d-flex align-items-center justify-content-center" style="min-height: 60vh;">
+            <img
+              id="imageViewerImg"
+              src=""
+              alt=""
+              style="max-width: 100%; max-height: 80vh; object-fit: contain;"
+            />
+          </div>
+        </div>
+        <div class="modal-footer d-flex justify-content-between">
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="imageViewerPrev" aria-label="Previous image">
+              ← Prev
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="imageViewerNext" aria-label="Next image">
+              Next →
+            </button>
+          </div>
+          <div class="d-flex gap-2 align-items-center">
+            <span class="text-muted small" id="imageViewerCount"></span>
+            <a class="btn btn-outline-light btn-sm" id="imageViewerOpen" href="#" target="_blank" rel="noopener">
+              Open in new tab
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block extra_js %}
@@ -139,6 +266,7 @@
 
       document.querySelectorAll(".js-answer-form").forEach(function (form) {
         const textarea = form.querySelector(".js-answer-textarea");
+        const imagesInput = form.querySelector(".js-answer-images");
         const saveBtn = form.querySelector(".js-save-btn");
         const toggleBtn = form.querySelector(".js-edit-toggle");
         const viewEl = form.querySelector(".js-answer-view");
@@ -150,11 +278,16 @@
 
         function update() {
           const current = normalize(textarea.value);
-          const dirty = current !== initial;
+          const dirtyText = current !== initial;
+          const dirtyImages = !!(imagesInput && imagesInput.files && imagesInput.files.length > 0);
+          const dirty = dirtyText || dirtyImages;
           saveBtn.classList.toggle("d-none", !isEditing || !dirty);
         }
 
         textarea.addEventListener("input", update);
+        if (imagesInput) {
+          imagesInput.addEventListener("change", update);
+        }
         if (toggleBtn && viewEl && editEl) {
           toggleBtn.addEventListener("click", function () {
             isEditing = !isEditing;
@@ -174,6 +307,80 @@
           });
         }
         update();
+      });
+
+      // Lightbox-style image viewer (Bootstrap modal)
+      const modalEl = document.getElementById("imageViewerModal");
+      const imgEl = document.getElementById("imageViewerImg");
+      const openEl = document.getElementById("imageViewerOpen");
+      const prevBtn = document.getElementById("imageViewerPrev");
+      const nextBtn = document.getElementById("imageViewerNext");
+      const countEl = document.getElementById("imageViewerCount");
+      if (!modalEl || !imgEl || !openEl || !prevBtn || !nextBtn || !countEl || !window.bootstrap) return;
+
+      const modal = new bootstrap.Modal(modalEl);
+      let gallery = [];
+      let index = 0;
+
+      function setEnabled(btn, enabled) {
+        btn.disabled = !enabled;
+        btn.classList.toggle("disabled", !enabled);
+      }
+
+      function render() {
+        const item = gallery[index];
+        const url = item ? item.dataset.fullUrl || item.getAttribute("href") : "";
+        imgEl.src = url || "";
+        imgEl.alt = "Answer image";
+        openEl.href = url || "#";
+        countEl.textContent = gallery.length ? (index + 1) + " / " + gallery.length : "";
+        setEnabled(prevBtn, index > 0);
+        setEnabled(nextBtn, index < gallery.length - 1);
+      }
+
+      function openFrom(anchor) {
+        const container = anchor.closest(".js-image-gallery") || document;
+        gallery = Array.from(container.querySelectorAll("a.js-image-thumb"));
+        index = Math.max(0, gallery.indexOf(anchor));
+        render();
+        modal.show();
+      }
+
+      document.addEventListener("click", function (e) {
+        const a = e.target.closest && e.target.closest("a.js-image-thumb");
+        if (!a) return;
+        // Use popup viewer instead of navigating away
+        e.preventDefault();
+        openFrom(a);
+      });
+
+      prevBtn.addEventListener("click", function () {
+        if (index > 0) {
+          index -= 1;
+          render();
+        }
+      });
+
+      nextBtn.addEventListener("click", function () {
+        if (index < gallery.length - 1) {
+          index += 1;
+          render();
+        }
+      });
+
+      modalEl.addEventListener("hidden.bs.modal", function () {
+        // Clear src so the browser stops decoding/playing large images.
+        imgEl.src = "";
+        openEl.href = "#";
+        countEl.textContent = "";
+        gallery = [];
+        index = 0;
+      });
+
+      document.addEventListener("keydown", function (e) {
+        if (!modalEl.classList.contains("show")) return;
+        if (e.key === "ArrowLeft") prevBtn.click();
+        if (e.key === "ArrowRight") nextBtn.click();
       });
     })();
   </script>

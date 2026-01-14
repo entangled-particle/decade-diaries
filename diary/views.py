@@ -5,7 +5,7 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .models import Diary, Question, Answer
+from .models import Diary, Question, Answer, AnswerImage
 from .forms import DiaryForm
 
 
@@ -53,6 +53,7 @@ def save_answer(request, diary_id, question_id):
     question = get_object_or_404(Question, id=question_id)
 
     answer_text = request.POST.get("answer", "")
+    uploaded_images = request.FILES.getlist("images")
 
     existing = (
         Answer.objects.filter(diary=diary, user=request.user, question=question)
@@ -62,8 +63,17 @@ def save_answer(request, diary_id, question_id):
     if existing:
         existing.answer = answer_text
         existing.save(update_fields=["answer", "updated_at"])
+        answer_obj = existing
     else:
-        Answer.objects.create(diary=diary, user=request.user, question=question, answer=answer_text)
+        answer_obj = Answer.objects.create(
+            diary=diary, user=request.user, question=question, answer=answer_text
+        )
+
+    # Append any newly uploaded images (do not delete existing ones).
+    if uploaded_images:
+        AnswerImage.objects.bulk_create(
+            [AnswerImage(answer=answer_obj, image=f) for f in uploaded_images]
+        )
 
     messages.success(request, "Saved.")
     return redirect("diary:detail", diary_id=diary.id)
@@ -86,6 +96,7 @@ def detail(request, diary_id):
     answer_qs = (
         Answer.objects.filter(diary=diary, user__is_superuser=False)
         .select_related("user", "question")
+        .prefetch_related("images")
         .order_by("user_id", "question_id", "-updated_at")
     )
     answer_by_pair = {}

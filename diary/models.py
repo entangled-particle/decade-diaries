@@ -48,3 +48,19 @@ class Answer(models.Model):
 
     def __str__(self):
         return self.answer
+
+
+class AnswerImage(models.Model):
+    """
+    Stores one uploaded image for an Answer (supports multiple per answer).
+    """
+
+    answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name="images")
+    image = models.FileField(upload_to="answers/images/")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+
+    def __str__(self):
+        return f"AnswerImage(answer_id={self.answer_id}, id={self.id})"
