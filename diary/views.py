@@ -1,4 +1,3 @@
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.http import HttpResponseForbidden
@@ -75,7 +74,6 @@ def save_answer(request, diary_id, question_id):
             [AnswerImage(answer=answer_obj, image=f) for f in uploaded_images]
         )
 
-    messages.success(request, "Saved.")
     return redirect("diary:detail", diary_id=diary.id)
 
 @login_required
