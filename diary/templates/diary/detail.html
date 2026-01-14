@@ -144,8 +144,9 @@
 
     #imageViewerModal .modal-body {
       overflow: auto;
-      padding: 0 !important;
+      padding: 24px !important;
       background: transparent !important;
+      cursor: default;
     }
 
     .dd-picture-frame {
@@ -155,6 +156,7 @@
       border-radius: 16px;
       max-width: min(980px, 92vw);
       max-height: 76vh;
+      cursor: default;
       /* warmer, cleaner “wood frame” */
       background: linear-gradient(135deg, #9b5d33 0%, #6f3f23 40%, #4a2a17 100%);
       border: 1px solid rgba(255,255,255,0.10);
@@ -421,7 +423,7 @@
   <div class="modal fade" id="imageViewerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
       <div class="modal-content">
-        <div class="modal-body p-3">
+        <div class="modal-body js-image-viewer-body">
           <div class="d-flex align-items-center justify-content-center">
             <div class="dd-picture-frame">
               <div class="dd-picture-mat">
@@ -493,6 +495,7 @@
       if (!modalEl || !imgEl || !window.bootstrap) return;
 
       const modal = new bootstrap.Modal(modalEl);
+      const modalBody = modalEl.querySelector(".js-image-viewer-body");
       let gallery = [];
       let index = 0;
 
@@ -518,6 +521,14 @@
         e.preventDefault();
         openFrom(a);
       });
+
+      // Clicking the area around the frame (inside modal) closes it.
+      if (modalBody) {
+        modalBody.addEventListener("click", function (e) {
+          if (e.target && e.target.closest && e.target.closest(".dd-picture-frame")) return;
+          modal.hide();
+        });
+      }
 
       modalEl.addEventListener("hidden.bs.modal", function () {
         // Clear src so the browser stops decoding/playing large images.
