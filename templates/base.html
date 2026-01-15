@@ -38,17 +38,15 @@
         color: var(--dd-ink);
         font-family: var(--dd-font);
         background-color: #23160d;
+        /* Fullscreen background (no tiling) */
+        min-height: 100vh;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: cover;
         /* Subtle leather/wood vibe */
         background-image:
           radial-gradient(1200px 500px at 20% 0%, rgba(255, 255, 255, 0.08), transparent 60%),
-          radial-gradient(900px 450px at 90% 20%, rgba(0, 0, 0, 0.20), transparent 55%),
-          repeating-linear-gradient(
-            90deg,
-            rgba(255, 255, 255, 0.02) 0px,
-            rgba(255, 255, 255, 0.02) 2px,
-            rgba(0, 0, 0, 0.02) 4px,
-            rgba(0, 0, 0, 0.02) 6px
-          );
+          radial-gradient(900px 450px at 90% 20%, rgba(0, 0, 0, 0.20), transparent 55%);
       }
 
       /* Parchment page */
