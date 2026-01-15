@@ -106,7 +106,7 @@ DATABASES = {
     }
 }
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.environ.get("POSTGRES_URL")
 if DATABASE_URL:
     import dj_database_url
 
