@@ -3,86 +3,99 @@
 
 {% block title %}Decade Diaries — Admin Login{% endblock %}
 
+{% block extra_head %}
+  <style>
+    /* Center admin login card in viewport (accounting for navbar + padding) */
+    .dd-admin-login-center {
+      min-height: calc(100vh - 140px);
+      display: flex;
+      align-items: center;
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
-  <div class="row justify-content-center">
-    <div class="col-12 col-md-8 col-lg-5">
-      <div class="card shadow-sm">
-        <div class="card-body p-4">
-          <div class="mb-3">
-            <h1 class="h3 mb-1">Decade Diaries</h1>
-            <p class="text-muted mb-0">{% trans "Sign in to administration" %}</p>
-          </div>
-
-          {% if form.errors %}
-            <div class="alert alert-danger" role="alert">
-              {% if form.non_field_errors %}
-                {{ form.non_field_errors|striptags }}
-              {% else %}
-                {% trans "Please correct the error below." %}
-              {% endif %}
-            </div>
-          {% endif %}
-
-          <form method="post" action="{{ app_path }}">
-            {% csrf_token %}
-
+  <div class="dd-admin-login-center">
+    <div class="row justify-content-center w-100">
+      <div class="col-12 col-md-8 col-lg-5">
+        <div class="card shadow-sm">
+          <div class="card-body p-4">
             <div class="mb-3">
-              <label class="form-label" for="{{ form.username.id_for_label }}">
-                {{ form.username.label }}
-              </label>
-              <input
-                type="text"
-                name="{{ form.username.html_name }}"
-                id="{{ form.username.id_for_label }}"
-                class="form-control"
-                value="{{ form.username.value|default_if_none:'' }}"
-                autocomplete="username"
-                autocapitalize="none"
-                autofocus
-                required
-              />
-              {% if form.username.errors %}
-                <div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>
-              {% endif %}
+              <h1 class="h3 mb-1">Decade Diaries</h1>
+              <p class="text-muted mb-0">{% trans "Sign in to administration" %}</p>
             </div>
 
-            <div class="mb-3">
-              <label class="form-label" for="{{ form.password.id_for_label }}">
-                {{ form.password.label }}
-              </label>
-              <input
-                type="password"
-                name="{{ form.password.html_name }}"
-                id="{{ form.password.id_for_label }}"
-                class="form-control"
-                autocomplete="current-password"
-                required
-              />
-              {% if form.password.errors %}
-                <div class="text-danger small mt-1">{{ form.password.errors|striptags }}</div>
-              {% endif %}
-            </div>
-
-            <input
-              type="hidden"
-              name="{{ redirect_field_name }}"
-              value="{{ redirect_field_value|default:next }}"
-            />
-
-            <div class="d-grid gap-2">
-              <button type="submit" class="btn btn-primary">
-                {% trans "Log in" %}
-              </button>
-            </div>
-
-            {% if password_reset_url %}
-              <div class="mt-3 text-center">
-                <a class="link-secondary" href="{{ password_reset_url }}">
-                  {% trans "Forgotten your password or username?" %}
-                </a>
+            {% if form.errors %}
+              <div class="alert alert-danger" role="alert">
+                {% if form.non_field_errors %}
+                  {{ form.non_field_errors|striptags }}
+                {% else %}
+                  {% trans "Please correct the error below." %}
+                {% endif %}
               </div>
             {% endif %}
-          </form>
+
+            <form method="post" action="{{ app_path }}">
+              {% csrf_token %}
+
+              <div class="mb-3">
+                <label class="form-label" for="{{ form.username.id_for_label }}">
+                  {{ form.username.label }}
+                </label>
+                <input
+                  type="text"
+                  name="{{ form.username.html_name }}"
+                  id="{{ form.username.id_for_label }}"
+                  class="form-control"
+                  value="{{ form.username.value|default_if_none:'' }}"
+                  autocomplete="username"
+                  autocapitalize="none"
+                  autofocus
+                  required
+                />
+                {% if form.username.errors %}
+                  <div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="{{ form.password.id_for_label }}">
+                  {{ form.password.label }}
+                </label>
+                <input
+                  type="password"
+                  name="{{ form.password.html_name }}"
+                  id="{{ form.password.id_for_label }}"
+                  class="form-control"
+                  autocomplete="current-password"
+                  required
+                />
+                {% if form.password.errors %}
+                  <div class="text-danger small mt-1">{{ form.password.errors|striptags }}</div>
+                {% endif %}
+              </div>
+
+              <input
+                type="hidden"
+                name="{{ redirect_field_name }}"
+                value="{{ redirect_field_value|default:next }}"
+              />
+
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                  {% trans "Log in" %}
+                </button>
+              </div>
+
+              {% if password_reset_url %}
+                <div class="mt-3 text-center">
+                  <a class="link-secondary" href="{{ password_reset_url }}">
+                    {% trans "Forgotten your password or username?" %}
+                  </a>
+                </div>
+              {% endif %}
+            </form>
+          </div>
         </div>
       </div>
     </div>
