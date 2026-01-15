@@ -99,38 +99,22 @@ WSGI_APPLICATION = 'decadediaries.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-if os.environ.get("POSTGRES_DATABASE") is None:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('POSTGRES_DATABASE'),
-            'USER': os.environ.get('POSTGRES_USER'),
-            'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
-            'HOST': os.environ.get('POSTGRES_HOST'),
-            'PORT': os.environ.get('POSTGRES_PORT'),
-        }
-    }
-
-OPTIONS = {
-    "sslmode": "require",
 }
 
-# DATABASE_URL = os.environ.get("POSTGRES_URL")
-# if DATABASE_URL:
-#     import dj_database_url
+DATABASE_URL = os.environ.get("POSTGRES_URL_NON_POOLING")
+if DATABASE_URL:
+    import dj_database_url
 
-#     DATABASES["default"] = dj_database_url.parse(
-#         DATABASE_URL,
-#         conn_max_age=600,
-#         conn_health_checks=True,
-#     )
+    DATABASES["default"] = dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 
 
 # Password validation
