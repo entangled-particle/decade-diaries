@@ -118,6 +118,10 @@ else:
         }
     }
 
+OPTIONS = {
+    "sslmode": "require",
+}
+
 # DATABASE_URL = os.environ.get("POSTGRES_URL")
 # if DATABASE_URL:
 #     import dj_database_url
