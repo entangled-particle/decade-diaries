@@ -9,5 +9,6 @@ urlpatterns = [
     path('diary/create/', views.create, name='create'),
     path('diary/<int:diary_id>/', views.detail, name='detail'),
     path('diary/<int:diary_id>/question/<int:question_id>/save/', views.save_answer, name='save_answer'),
+    path('diary/<int:diary_id>/image/<int:image_id>/delete/', views.delete_answer_image, name='delete_answer_image'),
     path('logout/', LogoutView.as_view(), name='logout'),
 ]

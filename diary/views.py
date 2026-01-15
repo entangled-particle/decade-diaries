@@ -117,3 +117,31 @@ def detail(request, diary_id):
             "rows": rows,
         },
     )
+
+
+@login_required
+@require_POST
+def delete_answer_image(request, diary_id, image_id):
+    """
+    Delete a previously uploaded AnswerImage owned by the logged-in user.
+    """
+    if request.user.is_superuser:
+        return HttpResponseForbidden("Superusers are not allowed to modify diary answers.")
+
+    diary = get_object_or_404(Diary, id=diary_id)
+    if diary.locked:
+        return HttpResponseForbidden("This diary is locked.")
+
+    img = get_object_or_404(
+        AnswerImage.objects.select_related("answer", "answer__diary", "answer__user"),
+        id=image_id,
+        answer__diary_id=diary.id,
+        answer__user_id=request.user.id,
+    )
+
+    # Delete the underlying file from storage first (works for FileSystemStorage and S3).
+    # If storage deletion fails, keep the DB record so the user can retry.
+    img.image.delete(save=False)
+    img.delete()
+
+    return redirect("diary:detail", diary_id=diary.id)

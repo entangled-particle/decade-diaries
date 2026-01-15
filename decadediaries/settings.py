@@ -154,14 +154,55 @@ USE_TZ = True
 STATIC_URL = "/static/"
 # Vercel serves this directory via `@vercel/static-build` + `routes`.
 STATIC_ROOT = BASE_DIR / "staticfiles_build" / "static"
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+
+# Media storage
+# - Local dev defaults to filesystem under BASE_DIR / "media"
+# - If AWS_STORAGE_BUCKET_NAME is set, media is stored in S3 via django-storages
+AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", "").strip()
+USE_S3_MEDIA = bool(AWS_STORAGE_BUCKET_NAME)
+
 STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
     },
 }
+
+if USE_S3_MEDIA:
+    INSTALLED_APPS.append("storages")
+
+    AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME") or None
+    AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL") or None
+    AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID") or None
+    AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY") or None
+    AWS_SESSION_TOKEN = os.environ.get("AWS_SESSION_TOKEN") or None
+
+    # If using CloudFront/custom domain, set AWS_S3_CUSTOM_DOMAIN accordingly.
+    AWS_S3_CUSTOM_DOMAIN = os.environ.get("AWS_S3_CUSTOM_DOMAIN") or None
+
+    # Public-read media is typical; disable querystring signing unless you need private media.
+    AWS_QUERYSTRING_AUTH = os.environ.get("AWS_QUERYSTRING_AUTH", "").lower() in {"1", "true", "yes", "on"}
+    if not os.environ.get("AWS_QUERYSTRING_AUTH"):
+        AWS_QUERYSTRING_AUTH = False
+
+    AWS_DEFAULT_ACL = None
+
+    # Store uploads under a prefix within the bucket.
+    AWS_LOCATION_MEDIA = os.environ.get("AWS_LOCATION_MEDIA", "media").strip().strip("/")
+
+    STORAGES["default"] = {"BACKEND": "decadediaries.storage_backends.MediaStorage"}
+
+    if AWS_S3_CUSTOM_DOMAIN:
+        MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION_MEDIA}/"
+    else:
+        # Works for standard AWS S3 (virtual-hosted style). For non-AWS S3, set AWS_S3_CUSTOM_DOMAIN
+        # or AWS_S3_ENDPOINT_URL and AWS_S3_CUSTOM_DOMAIN.
+        MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{AWS_LOCATION_MEDIA}/"
+
+    MEDIA_ROOT = None
+else:
+    STORAGES["default"] = {"BACKEND": "django.core.files.storage.FileSystemStorage"}
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = BASE_DIR / "media"
 
 CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "").split()
 if not CSRF_TRUSTED_ORIGINS:
