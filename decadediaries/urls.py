@@ -3,6 +3,11 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+# Django admin branding (affects login UI header/title)
+admin.site.site_header = "Decade Diaries"
+admin.site.site_title = "Decade Diaries"
+admin.site.index_title = "Decade Diaries"
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('diary.urls')),
