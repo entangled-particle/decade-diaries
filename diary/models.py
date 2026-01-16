@@ -15,7 +15,8 @@ class Diary(models.Model):
     title = models.CharField(max_length=200)
     month = models.PositiveSmallIntegerField(
         default=current_month,
-        choices=[(i, timezone.datetime(2000, i, 1).strftime("%B")) for i in range(1, 13)],
+        choices=[(i, timezone.datetime(2000, i, 1).strftime("%B"))
+                 for i in range(1, 13)],
     )
     year = models.PositiveSmallIntegerField(default=current_year)
     locked = models.BooleanField(default=False)
@@ -24,6 +25,9 @@ class Diary(models.Model):
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        plural_name = "Diaries"
 
 
 class Question(models.Model):
@@ -55,7 +59,8 @@ class AnswerImage(models.Model):
     Stores one uploaded image for an Answer (supports multiple per answer).
     """
 
-    answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name="images")
+    answer = models.ForeignKey(
+        Answer, on_delete=models.CASCADE, related_name="images")
     image = models.FileField(upload_to="answers/images/")
     created_at = models.DateTimeField(auto_now_add=True)
 
