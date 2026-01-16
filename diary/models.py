@@ -27,7 +27,7 @@ class Diary(models.Model):
         return self.title
 
     class Meta:
-        plural_name = "Diaries"
+        verbose_name_plural = "Diaries"
 
 
 class Question(models.Model):
